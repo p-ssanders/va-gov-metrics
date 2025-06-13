@@ -48,7 +48,7 @@ describe("happy path", () => {
       );
     });
 
-    it("logs the mean time to first commit", async () => {
+    it("logs the mean time to first commit overall and by repo", async () => {
       mock.method(console, "log");
       const roster = [];
 
@@ -58,6 +58,22 @@ describe("happy path", () => {
         console.log.mock.calls.some((call) =>
           call.arguments.includes(
             "Mean Time to First Commit based on GitHub Onboarding Issues (days): 3.00",
+          ),
+        ),
+      );
+
+      assert.ok(
+        console.log.mock.calls.some((call) =>
+          call.arguments.includes(
+            "Mean Time to First Commit based on GitHub Onboarding Issues (days) (vets-website only): 3.00",
+          ),
+        ),
+      );
+
+      assert.ok(
+        console.log.mock.calls.some((call) =>
+          call.arguments.includes(
+            "Mean Time to First Commit based on GitHub Onboarding Issues (days) (vets-api only): 0.00",
           ),
         ),
       );
@@ -92,7 +108,7 @@ describe("happy path", () => {
       );
     });
 
-    it("logs the mean time to first commit", async () => {
+    it("logs the mean time to first commit overall and by repo", async () => {
       mock.method(console, "log");
 
       await main(roster);
@@ -101,6 +117,22 @@ describe("happy path", () => {
         console.log.mock.calls.some((call) =>
           call.arguments.includes(
             "Mean Time to First Commit based on Roster (days): 13.00",
+          ),
+        ),
+      );
+
+      assert.ok(
+        console.log.mock.calls.some((call) =>
+          call.arguments.includes(
+            "Mean Time to First Commit based on Roster (days) (vets-website only): 0.00",
+          ),
+        ),
+      );
+
+      assert.ok(
+        console.log.mock.calls.some((call) =>
+          call.arguments.includes(
+            "Mean Time to First Commit based on Roster (days) (vets-api only): 13.00",
           ),
         ),
       );
