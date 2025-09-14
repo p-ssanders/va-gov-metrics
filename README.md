@@ -12,8 +12,12 @@
     > metrics@0.0.1 start
     > node index.js
 
-    Mean Time to First Commit based on Roster: 104.24 days
-    Mean Time to First Commit based on GitHub Onboarding Issues: 32.30 days
+    Mean Time to First Commit based on Roster (days): 104.24
+    Mean Time to First Commit based on Roster (days) (vets-website only): 110.32
+    Mean Time to First Commit based on Roster (days) (vets-api only): 98.16
+    Mean Time to First Commit based on GitHub Onboarding Issues (days): 32.30
+    Mean Time to First Commit based on GitHub Onboarding Issues (days) (vets-website only): 35.45
+    Mean Time to First Commit based on GitHub Onboarding Issues (days) (vets-api only): 29.15
 
 ## Mean Time to First Commit
 
@@ -29,3 +33,10 @@ Each run of the calculator produces two calculations of the MTTFC. The reason fo
 1.  [VA.gov GitHub Onboarding Template Issues](https://github.com/department-of-veterans-affairs/va.gov-team/issues?q=is%3Aissue+label%3Aplatform-orientation+is%3Aall)
 
 For each onboarder, the calculator finds their first commit after their onboarding began to either [`vets-api`](https://github.com/department-of-veterans-affairs/vets-api) or [`vets-website`](https://github.com/department-of-veterans-affairs/vets-website). The time to first commit is the number of days between the start of their onboarding and their first commit. These days-to-first-commit measurements are then averaged to produce a "mean time to first commit".
+
+The calculator now also computes separate metrics for each repository:
+1. **Overall MTTFC**: The original metric, which considers the first commit to either repository
+2. **MTTFC for vets-website only**: Mean time to first commit considering only commits to the vets-website repository
+3. **MTTFC for vets-api only**: Mean time to first commit considering only commits to the vets-api repository
+
+This breakdown helps teams understand if there are significant differences in onboarding time between frontend (vets-website) and backend (vets-api) development.
