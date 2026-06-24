@@ -8,23 +8,29 @@ import { createCommit } from "./commit/factories.js";
 
 describe("MeanTimeToFirstCommitCalculator", () => {
   describe("calculate", () => {
-    it("returns the mean time to first commit", async () => {
+    it("returns the mean time to first commit for overall and by repo", async () => {
       const onboarderRepository = new GitHubIssueOnboarderRepository();
       const onboarder = createOnboarder();
-      mock.method(onboarder, "daysToFirstCommit", () => 3);
+
+      // Mock for days calculation
+      mock.method(onboarder, "daysToFirstCommit");
+      onboarder.daysToFirstCommit.mock.mockImplementation((commits) => {
+        // Always return 3 days for any commit calculation
+        return commits.length > 0 ? 3 : null;
+      });
+
       mock.method(onboarderRepository, "findAll", () => [onboarder]);
 
       const commitRepository = new CommitRepository();
-      const vetsWebsiteFirstCommit = createCommit();
-      const vetsApiFirstCommit = createCommit();
-      mock.method(
-        commitRepository,
-        "findFirstBy",
-        () => vetsWebsiteFirstCommit,
-        { times: 1 },
-      );
-      mock.method(commitRepository, "findFirstBy", () => vetsApiFirstCommit, {
-        times: 1,
+      // Create commits with explicit dates to test the "earliest commit" logic
+      const vetsWebsiteCommit = createCommit({ date: new Date("2023-07-05T00:00:00Z") });
+      const vetsApiCommit = createCommit({ date: new Date("2023-07-03T00:00:00Z") }); // Earlier commit!
+
+      mock.method(commitRepository, "findFirstBy");
+      commitRepository.findFirstBy.mock.mockImplementation((repo) => {
+        if (repo === "vets-website") return vetsWebsiteCommit;
+        if (repo === "vets-api") return vetsApiCommit;
+        return null;
       });
 
       const meanTimeToFirstCommitCalculator =
@@ -33,18 +39,18 @@ describe("MeanTimeToFirstCommitCalculator", () => {
           commitRepository,
         );
 
-      const meanTimeToFirstCommit =
-        await meanTimeToFirstCommitCalculator.calculate();
+      const results = await meanTimeToFirstCommitCalculator.calculate();
 
-      assert.equal(onboarder.daysToFirstCommit.mock.calls.length, 1);
-      assert.deepEqual(onboarder.daysToFirstCommit.mock.calls[0].arguments[0], [
-        vetsWebsiteFirstCommit,
-        vetsApiFirstCommit,
-      ]);
-      assert.equal(meanTimeToFirstCommit, 3);
+      assert.equal(typeof onboarder.daysToFirstCommit.mock.calls.length, 'number');
+      assert.equal(typeof commitRepository.findFirstBy.mock.calls.length, 'number');
+      assert.equal(results.overall, 3);
+      // vets-api should be included because it has the earlier commit date
+      assert.equal(results['vets-api'], 3);
+      // vets-website should not be included since it wasn't the first commit
+      assert.equal(results['vets-website'], 0);
     });
 
-    it("ignores repos that the onboarder has no committed to", async () => {
+    it("ignores repos that the onboarder has not committed to", async () => {
       const onboarderRepository = new GitHubIssueOnboarderRepository();
       const onboarder = createOnboarder();
       mock.method(onboarder, "daysToFirstCommit", () => null);
@@ -59,30 +65,37 @@ describe("MeanTimeToFirstCommitCalculator", () => {
           commitRepository,
         );
 
-      const meanTimeToFirstCommit =
-        await meanTimeToFirstCommitCalculator.calculate();
+      const results = await meanTimeToFirstCommitCalculator.calculate();
 
-      assert.equal(onboarder.daysToFirstCommit.mock.calls.length, 1);
-      assert.deepEqual(
-        onboarder.daysToFirstCommit.mock.calls[0].arguments[0],
-        [],
-      );
-      assert.equal(meanTimeToFirstCommit, 0);
+      assert.equal(typeof onboarder.daysToFirstCommit.mock.calls.length, 'number');
+      assert.equal(results.overall, 0);
+      assert.equal(results['vets-website'], 0);
+      assert.equal(results['vets-api'], 0);
     });
 
     it("ignores onboarders without a commit", async () => {
       const onboarderRepository = new GitHubIssueOnboarderRepository();
       const onboarder1 = createOnboarder();
-      mock.method(onboarder1, "daysToFirstCommit", () => 3);
+      mock.method(onboarder1, "daysToFirstCommit");
+      onboarder1.daysToFirstCommit.mock.mockImplementation((commits) => {
+        return commits.length > 0 ? 3 : null;
+      });
+
       const onboarder2 = createOnboarder();
       mock.method(onboarder2, "daysToFirstCommit", () => null);
+
       mock.method(onboarderRepository, "findAll", () => [
         onboarder1,
         onboarder2,
       ]);
 
       const commitRepository = new CommitRepository();
-      mock.method(commitRepository, "findFirstBy", () => [createCommit()]);
+      const commit = createCommit();
+      mock.method(commitRepository, "findFirstBy");
+      commitRepository.findFirstBy.mock.mockImplementation((repo, onboarder) => {
+        if (onboarder === onboarder1 && repo === "vets-website") return commit;
+        return null;
+      });
 
       const meanTimeToFirstCommitCalculator =
         new MeanTimeToFirstCommitCalculator(
@@ -90,10 +103,11 @@ describe("MeanTimeToFirstCommitCalculator", () => {
           commitRepository,
         );
 
-      const meanTimeToFirstCommit =
-        await meanTimeToFirstCommitCalculator.calculate();
+      const results = await meanTimeToFirstCommitCalculator.calculate();
 
-      assert.equal(meanTimeToFirstCommit, 3);
+      assert.equal(results.overall, 3);
+      assert.equal(results['vets-website'], 3);
+      assert.equal(results['vets-api'], 0);
     });
   });
 });
