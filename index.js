@@ -63,9 +63,10 @@ const calculateMeanTimeToFirstCommit = async (
     commitRepository,
   );
 
-  const meanTimeToFirstCommit =
-    await meanTimeToFirstCommitCalculator.calculate();
-  console.log(`${label}: ${meanTimeToFirstCommit.toFixed(2)}`);
+  const results = await meanTimeToFirstCommitCalculator.calculate();
+  console.log(`${label}: ${results.overall.toFixed(2)}`);
+  console.log(`${label} (vets-website only): ${results['vets-website'].toFixed(2)}`);
+  console.log(`${label} (vets-api only): ${results['vets-api'].toFixed(2)}`);
 };
 
 /* node:coverage disable */
